@@ -1,0 +1,29 @@
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+
+# Visual Studio
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+
+# Unity settings auto-generated
+UserSettings/
+.DS_Store
+
+# Crash reports
+sysinfo.txt
+
+# PlasticSCM
+PlasticSCM/
+
+# Rider
+*.unityproj
