@@ -132,7 +132,10 @@ public class MissionsManager : Singleton<MissionsManager>
         {
             Debug.Log("✅ Mission complete!");
             checkUnlocking();
-            StateSender.Instance.UpdatePhone();
+            
+            //! StateSender.Instance.UpdatePhone();
+            _ = GameSaver.Instance.SaveGame();
+
             OnMissionValidated?.Invoke(true);
             CoroutineRunner.Instance.StartCoroutine(DelayedAdvance());
         }
@@ -334,7 +337,9 @@ public class MissionsManager : Singleton<MissionsManager>
         GameManager.Instance.queryBuilder.BuildQuery();
         GameManager.Instance.MissionUIManager.ShowUI();
         HighlightManager.Instance?.HighlightTutorialStep(CurrentMission);
-        StateSender.Instance.UpdatePhone();
+        
+        //! StateSender.Instance.UpdatePhone();
+        _ = GameSaver.Instance.SaveGame();
     }
 
 

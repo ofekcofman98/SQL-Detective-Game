@@ -12,16 +12,16 @@ namespace Assets.Scripts.ServerIntegration
 {
     public class GameProgressContainer
     {
-        public int sequenceIndex { get; set; }
-        public int currentMissionIndex { get; set; }
+        // public int sequenceIndex { get; set; }
+        // public int currentMissionIndex { get; set; }
 
-        public int Lives { get; set; }
-        public GameProgressContainer(int i_seqIndex, int i_currentMissionIndex, int i_Lives)
-        {
-            sequenceIndex = i_seqIndex;
-            currentMissionIndex = i_currentMissionIndex;
-            Lives = i_Lives;
-        }
+        // public int Lives { get; set; }
+        // public GameProgressContainer(int i_seqIndex, int i_currentMissionIndex, int i_Lives)
+        // {
+        //     sequenceIndex = i_seqIndex;
+        //     currentMissionIndex = i_currentMissionIndex;
+        //     Lives = i_Lives;
+        // }
 
     }
 }

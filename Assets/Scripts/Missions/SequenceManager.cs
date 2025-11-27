@@ -28,10 +28,10 @@ public class SequenceManager : Singleton<SequenceManager>
         MissionsManager.Instance.LoadMissionSequence(Current);
 
         GameManager.Instance.StartMissions();
-        ResetSender.Instance.SendResetToPhone();
+        //! ResetSender.Instance.SendResetToPhone();
 
-        StateSender.Instance.UpdatePhone();
-
+        // StateSender.Instance.UpdatePhone();
+        _ = GameSaver.Instance.SaveGame();
     }
 
 

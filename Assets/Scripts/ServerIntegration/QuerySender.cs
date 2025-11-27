@@ -10,73 +10,103 @@ using System;
 using Newtonsoft.Json;
 using Assets.Scripts.ServerIntegration;
 using System.Threading.Tasks;
+using System.Threading;
 
 
 public class QuerySender : MonoBehaviour
 {  
-public bool IsQuerySent { get; private set; } = false;
-    private ServerCommunicator m_communicator;
+    private IQueryRelayApi m_Api;
+    private string sessionKey => UniqueKeyManager.Instance.gameKey;
+    public bool IsQuerySent { get; private set; } = false;
+    // private ServerCommunicator m_communicator;
 
     private void Awake()
     {
-        m_communicator = new ServerCommunicator(ServerCommunicator.Endpoint.SendQuery);
+        m_Api = BackendFactory.CreateQueryRelayApi();
+        // m_communicator = new ServerCommunicator(ServerCommunicator.Endpoint.SendQuery);
     }
    
-    public void SendQueryToServer(Query query)
-    {     
-        query.PostDeserialize();
-        StartCoroutine(SendQuery(query));
-        new WaitForSeconds(m_communicator.screensaverDelayAfterQuery);
-        Debug.Log("⌛ Delay finished, about to show screensaver again.");
-        if (Application.isMobilePlatform)
+    public async void SendQueryToServer(Query query, CancellationToken ct = default)
+    {   
+        if (query == null)
         {
-            Debug.Log("📲 Calling screensaverController.ShowScreensaver()");
-            GameManager.Instance.screensaverController?.ShowScreensaver();
+            Debug.LogError("QuerySender.SendQueryToServer called with null query");
+            return;
         }
+
+        if(string.IsNullOrWhiteSpace(sessionKey))
+        {
+            Debug.LogError("QuerySender.SendQueryToServer called but SessionKey is empty");
+            return;
+        }
+
+        try
+        {
+            ApiMessageResponse response = await m_Api.SendQuery(sessionKey, query, ct);
+            Debug.Log($"📤 Query sent successfully, server said: {response.Message}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"❌ Failed to send query to server: {ex.Message}");
+            return;
+        }
+
+        MarkQueryAsSent();
+
+
+        // query.PostDeserialize();
+        // StartCoroutine(SendQuery(query));
+        // new WaitForSeconds(m_communicator.screensaverDelayAfterQuery);
+        // Debug.Log("⌛ Delay finished, about to show screensaver again.");
+        // if (Application.isMobilePlatform)
+        // {
+        //     Debug.Log("📲 Calling screensaverController.ShowScreensaver()");
+        //     GameManager.Instance.screensaverController?.ShowScreensaver();
+        // }
     }
 
-    private IEnumerator SendQuery(Query query)
-    {
-        if (string.IsNullOrEmpty(query.QueryString))
-        {
-            Debug.LogError("QueryString is empty! Cannot send query.");
-            yield break;
-        }
+    // private IEnumerator SendQuery(Query query)
+    // {
+    //     if (string.IsNullOrEmpty(query.QueryString))
+    //     {
+    //         Debug.LogError("QueryString is empty! Cannot send query.");
+    //         yield break;
+    //     }
 
-        string jsonPayload = JsonConvert.SerializeObject(query, JsonUtility.Settings);
+    //     string jsonPayload = JsonConvert.SerializeObject(query, JsonUtility.Settings);
 
-        Debug.Log($"📤 JSON Payload: {jsonPayload}");
+    //     Debug.Log($"📤 JSON Payload: {jsonPayload}");
 
-        var encoding = new System.Text.UTF8Encoding();
-        byte[] bodyRaw = encoding.GetBytes(jsonPayload);
+    //     var encoding = new System.Text.UTF8Encoding();
+    //     byte[] bodyRaw = encoding.GetBytes(jsonPayload);
 
 
-        UnityWebRequest request = new UnityWebRequest(m_communicator.ServerUrl, "POST")
-        {
-            uploadHandler = new UploadHandlerRaw(bodyRaw),
-            downloadHandler = new DownloadHandlerBuffer(),
-            method = UnityWebRequest.kHttpVerbPOST
-        };
+    //     UnityWebRequest request = new UnityWebRequest(m_communicator.ServerUrl, "POST")
+    //     {
+    //         uploadHandler = new UploadHandlerRaw(bodyRaw),
+    //         downloadHandler = new DownloadHandlerBuffer(),
+    //         method = UnityWebRequest.kHttpVerbPOST
+    //     };
 
-        request.disposeUploadHandlerOnDispose = true;
-        request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Content-Length", bodyRaw.Length.ToString());
+    //     request.disposeUploadHandlerOnDispose = true;
+    //     request.SetRequestHeader("Content-Type", "application/json");
+    //     request.SetRequestHeader("Content-Length", bodyRaw.Length.ToString());
 
-        yield return request.SendWebRequest();
+    //     yield return request.SendWebRequest();
 
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log($"✅✅ Query Sent Successfully! serverlURL: {m_communicator.ServerUrl}");
-            Debug.Log($"✅ Query Sent Successfully! Response: {request.downloadHandler.text}");
-            IsQuerySent = true;
+    //     if (request.result == UnityWebRequest.Result.Success)
+    //     {
+    //         Debug.Log($"✅✅ Query Sent Successfully! serverlURL: {m_communicator.ServerUrl}");
+    //         Debug.Log($"✅ Query Sent Successfully! Response: {request.downloadHandler.text}");
+    //         IsQuerySent = true;
            
-        }
-        else
-        {
-            Debug.LogError($"❌ Failed to send query: {request.responseCode} | {request.error}");
-            Debug.LogError($"❌ Server Response: {request.downloadHandler.text}");
-        }
-    }
+    //     }
+    //     else
+    //     {
+    //         Debug.LogError($"❌ Failed to send query: {request.responseCode} | {request.error}");
+    //         Debug.LogError($"❌ Server Response: {request.downloadHandler.text}");
+    //     }
+    // }
 
     public void ResetQuerySendFlag()
     {

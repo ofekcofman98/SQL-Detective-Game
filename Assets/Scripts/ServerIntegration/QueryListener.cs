@@ -15,100 +15,100 @@ using Assets.Scripts.ServerIntegration;
 
 public class QueryListener : MonoBehaviour
 {
-    private Coroutine listeningCoroutine;
-    private ServerCommunicator m_communicator;
+    // private Coroutine listeningCoroutine;
+    // private ServerCommunicator m_communicator;
 
-    private void Awake()
-    {
-        m_communicator = new ServerCommunicator(ServerCommunicator.Endpoint.GetQuery);
-    }
-    //public QueryListener()
-    //{
-    //    m_communicator = new ServerCommunicator("/get-query");
-    //}
+    // private void Awake()
+    // {
+    //     m_communicator = new ServerCommunicator(ServerCommunicator.Endpoint.GetQuery);
+    // }
+    // //public QueryListener()
+    // //{
+    // //    m_communicator = new ServerCommunicator("/get-query");
+    // //}
   
-    public void StartListening()
-    {
-        Debug.Log("🎧 StartListening() called.");
+    // public void StartListening()
+    // {
+    //     Debug.Log("🎧 StartListening() called.");
 
-        if(!m_communicator.IsMobile)
-        {
-            if (listeningCoroutine == null)
-            {
-                Debug.Log("✅ Starting CheckForNewQuery coroutine.");
-                listeningCoroutine = StartCoroutine(CheckForNewQuery());
-            }
-            else
-            {
-                Debug.Log("ℹ️ Already listening.");
-            }
-        }       
-    }
+    //     if(!m_communicator.IsMobile)
+    //     {
+    //         if (listeningCoroutine == null)
+    //         {
+    //             Debug.Log("✅ Starting CheckForNewQuery coroutine.");
+    //             listeningCoroutine = StartCoroutine(CheckForNewQuery());
+    //         }
+    //         else
+    //         {
+    //             Debug.Log("ℹ️ Already listening.");
+    //         }
+    //     }       
+    // }
 
 
-    public void StopListening()
-    {
-        if (listeningCoroutine != null)
-        {
-            StopCoroutine(listeningCoroutine);
-            listeningCoroutine = null;
-        }
-    }
+    // public void StopListening()
+    // {
+    //     if (listeningCoroutine != null)
+    //     {
+    //         StopCoroutine(listeningCoroutine);
+    //         listeningCoroutine = null;
+    //     }
+    // }
 
-    private IEnumerator CheckForNewQuery()
-    {
+    // private IEnumerator CheckForNewQuery()
+    // {
         
-            while (true)
-            {
+    //         while (true)
+    //         {
       
-                UnityWebRequest request = UnityWebRequest.Get(m_communicator.ServerUrl);
+    //             UnityWebRequest request = UnityWebRequest.Get(m_communicator.ServerUrl);
 
-                yield return request.SendWebRequest();
+    //             yield return request.SendWebRequest();
 
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    string receivedJson = request.downloadHandler.text;
+    //             if (request.result == UnityWebRequest.Result.Success)
+    //             {
+    //                 string receivedJson = request.downloadHandler.text;
 
-                    try
-                    {
+    //                 try
+    //                 {
 
-                        var settings = new JsonSerializerSettings();
-                        settings.Converters.Add(new OperatorConverter());
+    //                     var settings = new JsonSerializerSettings();
+    //                     settings.Converters.Add(new OperatorConverter());
 
-                        Query receivedQuery = JsonConvert.DeserializeObject<Query>(receivedJson, settings);
+    //                     Query receivedQuery = JsonConvert.DeserializeObject<Query>(receivedJson, settings);
 
-                        if (receivedQuery != null && !string.IsNullOrWhiteSpace(receivedQuery.QueryString))
-                        {
-                            Debug.Log($"✅ Query received and parsed: {receivedQuery.QueryString}");
+    //                     if (receivedQuery != null && !string.IsNullOrWhiteSpace(receivedQuery.QueryString))
+    //                     {
+    //                         Debug.Log($"✅ Query received and parsed: {receivedQuery.QueryString}");
 
-                            receivedQuery.PostDeserialize();
-                            GameManager.Instance.SaveQuery(receivedQuery);
-                            GameManager.Instance.ExecuteLocally(receivedQuery);
+    //                         receivedQuery.PostDeserialize();
+    //                         GameManager.Instance.SaveQuery(receivedQuery);
+    //                         GameManager.Instance.ExecuteLocally(receivedQuery);
 
-                        }
-                        else
-                        {
-                            // Debug.Log("⏳ Received query object is empty or missing QueryString.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"❌ Failed to parse full Query object: {ex.Message}");
-                    }
-                }
-                else if (request.responseCode == 204)
-                {
-                    Debug.Log("⏳ Server responded with 204 No Content — no new query yet.");
-                }
-                else
-                {
-                    Debug.LogError($"❌ Failed to fetch query: {request.responseCode} | {request.error}");
-                }
+    //                     }
+    //                     else
+    //                     {
+    //                         // Debug.Log("⏳ Received query object is empty or missing QueryString.");
+    //                     }
+    //                 }
+    //                 catch (Exception ex)
+    //                 {
+    //                     Debug.LogError($"❌ Failed to parse full Query object: {ex.Message}");
+    //                 }
+    //             }
+    //             else if (request.responseCode == 204)
+    //             {
+    //                 Debug.Log("⏳ Server responded with 204 No Content — no new query yet.");
+    //             }
+    //             else
+    //             {
+    //                 Debug.LogError($"❌ Failed to fetch query: {request.responseCode} | {request.error}");
+    //             }
 
 
-                yield return new WaitForSeconds(m_communicator.pollRateMilliSeconds / 1000f);  // Wait before next poll
-            }    
-    }
+    //             yield return new WaitForSeconds(m_communicator.pollRateMilliSeconds / 1000f);  // Wait before next poll
+    //         }    
+    // }
 }
 
 

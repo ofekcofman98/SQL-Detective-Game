@@ -60,35 +60,44 @@ public class UniqueKeyMenu : MenuBase
 
     private IEnumerator WaitForKeyGeneration()
     {
-        UniqueKeyManager.Instance.GenerateGameKey();
+        var task = UniqueKeyManager.Instance.StartNewSessionAsync();
 
-        yield return new WaitUntil(() => !string.IsNullOrEmpty(UniqueKeyManager.Instance.gameKey));
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError($"❌ Failed to start new session: {task.Exception.InnerException?.Message ?? task.Exception.Message}");
+            yield break;
+        }
+
+        if (string.IsNullOrEmpty(UniqueKeyManager.Instance.gameKey))
+        {
+            Debug.LogError("❌ WaitForKeyGeneration: gameKey is still empty after StartNewSessionAsync");
+            yield break;
+        }
 
         keyLabel.text = $"{UniqueKeyManager.Instance.gameKey}";
 
-        ConnectListener.Instance.StartListening();
+        // ConnectListener.Instance.StartListening();
         // Wait for mobile to connect (you need to call OnMobileConnected externally)
-        yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
-                                         GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
+        // yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
+        //                                  GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
 
-        GameManager.Instance.queryReceiver.StartListening();
         MenuManager.Instance.HideMenu(eMenuType.Key);
         // GameManager.Instance.TurnOffSkipOnMobile();
 
-        if (GameManager.Instance.MobileConnected)
-        {
-            UIManager.Instance.HideSQLButton();
-            // Debug.Log("GameManager.Instance.MobileConnected = true");
-        }
-        else if (GameManager.Instance.SkipMobileWaiting)
-        {
-            UIManager.Instance.ShowSQLButton();
-            // Debug.Log("GameManager.Instance.SkipMobileWaiting = true");
-        }
-
+        // if (GameManager.Instance.MobileConnected)
+        // {
+        //     UIManager.Instance.HideSQLButton();
+        //     // Debug.Log("GameManager.Instance.MobileConnected = true");
+        // }
+        // else if (GameManager.Instance.SkipMobileWaiting)
+        // {
+        //     UIManager.Instance.ShowSQLButton();
+        //     // Debug.Log("GameManager.Instance.SkipMobileWaiting = true");
+        // }
 
         m_OnKeyAccepted?.Invoke();
-
     }
 
     private IEnumerator WaitForKeyRegistration()
@@ -97,14 +106,22 @@ public class UniqueKeyMenu : MenuBase
 
         keyLabel.text = $"{UniqueKeyManager.Instance.gameKey}";
 
-        ConnectListener.Instance.StartListening();
-        // Wait for mobile to connect (you need to call OnMobileConnected externally)
-        yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
-                                         GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
-
-        GameManager.Instance.queryReceiver.StartListening();
         MenuManager.Instance.HideMenu(eMenuType.Key);
-        // GameManager.Instance.TurnOffSkipOnMobile();
-        GameManager.Instance.StartSavedGame(UniqueKeyManager.Instance.gameKey);
+
+        GameManager.Instance.StartSavedGame();
+
+        // yield return new WaitUntil(() => !string.IsNullOrEmpty(UniqueKeyManager.Instance.gameKey));
+
+        // keyLabel.text = $"{UniqueKeyManager.Instance.gameKey}";
+
+        // ConnectListener.Instance.StartListening();
+        // // Wait for mobile to connect (you need to call OnMobileConnected externally)
+        // yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
+        //                                  GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
+
+        // MenuManager.Instance.HideMenu(eMenuType.Key);
+
+        // // m_OnKeyAccepted?.Invoke();
+        // GameManager.Instance.StartSavedGame();
     }
 }

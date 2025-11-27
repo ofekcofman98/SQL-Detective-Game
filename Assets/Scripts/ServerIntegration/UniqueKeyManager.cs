@@ -10,126 +10,90 @@ using System;
 using Newtonsoft.Json;
 using Assets.Scripts.ServerIntegration;
 using Newtonsoft.Json.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Assets.Scripts.ServerIntegration
 {
     public class UniqueKeyManager : Singleton<UniqueKeyManager>
     {
-        private ServerCommunicator m_communicator;
         public string gameKey { get; private set; }
+
+        private ISessionApi m_SessionApi;
+        private GameSessionDto m_CurrentSession;
 
         private bool isKeyInWaitlist = false;
 
 
-        private void Awake()
+        protected override void Awake()
         {
-            gameKey = "";
-            m_communicator = new ServerCommunicator(ServerCommunicator.Endpoint.GenerateKey);
+            base.Awake();
+            if (Instance != this) return;
+
+            gameKey = string.Empty;
+            m_SessionApi = BackendFactory.CreateSessionApi();
         }
 
-        private IEnumerator getUniqueKey()
+        public void SetGameKeyFromSavedGame(string i_GameKey)
         {
-            UnityWebRequest request = UnityWebRequest.Get(m_communicator.ServerUrl);
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                string receivedJson = request.downloadHandler.text;
-                try
-                {
-                    var settings = new JsonSerializerSettings();
-                    settings.Converters.Add(new OperatorConverter());
-
-                    Dictionary<string, string> result = JsonConvert.DeserializeObject<Dictionary<string, string>>(receivedJson, settings);
-                    gameKey = result["key"];
-                    Debug.Log($"gameKey value returned from server : {gameKey}");
-
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"❌ Failed to parse full Query object: {ex.Message}");
-                }
-            }
-            else if (request.responseCode == 204)
-            {
-                Debug.Log("⏳ Server responded with 204 No Content — no new query yet.");
-            }
-            else
-            {
-                Debug.LogError($"❌ Failed to fetch query: {request.responseCode} | {request.error}");
-            }
-
-
-        }
-
-        public void SetGameKeyFromSavedGame(string i_gameKey)
-        {
-            gameKey = i_gameKey;
-        }
-
-        public void GenerateGameKey()
-        {
-            if (gameKey == null || gameKey.Equals(""))
-            {
-                StartCoroutine(getUniqueKey());
-            }
-            Debug.Log($"gameKey : {gameKey}");
+            gameKey = i_GameKey;
+            Debug.Log($"📌 Game key set from saved game: {gameKey}");
         }
 
 
-        public void CompareKeys(string key, Action<bool> onResult)
+        public async Task StartNewSessionAsync(CancellationToken ct = default)
         {
-            m_communicator = new ServerCommunicator(ServerCommunicator.Endpoint.CompareKeys);
-            var payload = new Dictionary<string, string>
+            if(!string.IsNullOrWhiteSpace(gameKey))
             {
-                { "key", key }
-            };
+                Debug.Log($"📌 Game key already exists: {gameKey}");
+                return;
+            }
 
-            string jsonPayload = JsonConvert.SerializeObject(payload);
-            Debug.Log($"📤 JSON Payload: {jsonPayload}");
-
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonPayload);
-
-            UnityWebRequest request = new UnityWebRequest(m_communicator.ServerUrl, "POST")
+            StartSessionResponse response = await m_SessionApi.StartSessionAsync(ct);
+            if (response == null || string.IsNullOrWhiteSpace(response.Key))
             {
-                uploadHandler = new UploadHandlerRaw(bodyRaw),
-                downloadHandler = new DownloadHandlerBuffer()
-            };
+                Debug.LogError("❌ StartNewSessionAsync: backend did not return a valid key");
+                return;
+            }
 
-            request.disposeUploadHandlerOnDispose = true;
-            request.disposeDownloadHandlerOnDispose = true;
-            request.SetRequestHeader("Content-Type", "application/json");
+            gameKey = response.Key;
+            Debug.Log($"🔑 Received session key from backend: {gameKey}");
+        }
 
-            // Send request asynchronously
-            UnityWebRequestAsyncOperation operation = request.SendWebRequest();
-
-            operation.completed += _ =>
+        public async Task CompareKeys(string key, Action<bool> onResult)
+        {
+            try
             {
-                if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
+                if (string.IsNullOrWhiteSpace(key))
                 {
-                    Debug.Log($"✅ key {key} is in waitlist !");
-                    isKeyInWaitlist = true;
-                    gameKey = key;
-                    ConnectSender.Instance.SendConnectToPC(gameKey);
-                    GameManager.Instance.InitMobile();
-                    // GameManager.Instance.SetSqlMode();
+                    Debug.Log("[CompareKeys]: Empty key");
+                    onResult?.Invoke(false);
+                    return;
+                }   
 
-                    onResult?.Invoke(true);   // 🔽 callback to UI
-                }
-                else if (request.responseCode == 204)
+                GameSessionDto session = await m_SessionApi.GetSessionAsync(key);
+
+                if (session == null)
                 {
-                    Debug.Log($"✅ key {key} is not in waitlist");
-                    isKeyInWaitlist = false;
-                    onResult?.Invoke(false);  // 🔽 callback to UI
+                    Debug.Log($"No session found for key {key}");
+                    onResult?.Invoke(false);
+                    return;
                 }
-                else
-                {
-                    Debug.LogError($"❌ Failed to send state: {request.responseCode} | {request.error}");
-                    Debug.LogError($"❌ Server Response: {request.downloadHandler.text}");
-                    onResult?.Invoke(false);  // treat as fail
-                }
-            };
+
+                gameKey = session.key;
+                m_CurrentSession = session;
+
+                Debug.Log($"✅ Session found for key '{key}', adopted as gameKey");
+
+                GameManager.Instance.InitMobile();
+
+                onResult?.Invoke(true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"❌ Error while validating key '{key}': {ex.Message}");
+                onResult?.Invoke(false);
+            }
         }
 
     }
