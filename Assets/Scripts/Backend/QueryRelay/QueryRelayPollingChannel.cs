@@ -9,8 +9,6 @@ using UnityEngine;
 public class QueryRelayPollingChannel : IBackendPollingChannel
 {
     private readonly IQueryRelayApi r_Api;
-    private readonly string r_SessionKey;
-
     public event Action<Query> OnQueryReceived;
 
     public string Name => "QueryRelay";
@@ -26,17 +24,25 @@ public class QueryRelayPollingChannel : IBackendPollingChannel
 
     public async Task PollAsync(CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(r_SessionKey))
+        Debug.Log($"[QueryRelayPollingChannel] Polling...");
+
+        string sessionKey = UniqueKeyManager.Instance.gameKey;
+
+        if (string.IsNullOrWhiteSpace(sessionKey))
         {
+            Debug.Log($"[QueryRelayPollingChannel] string.IsNullOrWhiteSpace(r_SessionKey) == true");
             return;
         }
 
-        Query query = await r_Api.GetNextQuery(r_SessionKey, ct);
-
+        Query query = await r_Api.GetNextQuery(sessionKey, ct);
+                
         if (query == null)
         {
+            Debug.Log("[QueryRelayPollingChannel] No query available.");
             return;
         }
+
+        Debug.Log($"[QueryRelayPollingChannel] Query Received: {query.QueryString}");
 
         query.PostDeserialize();
         OnQueryReceived?.Invoke(query);

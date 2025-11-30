@@ -55,6 +55,11 @@ public class BackendClient
 
         try
         {
+            if (typeof(TResponse) == typeof(string))
+            {
+                return (TResponse)(object)json;
+            }
+
             return JsonConvert.DeserializeObject<TResponse>(json);
         }
         catch (Exception ex)

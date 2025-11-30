@@ -4,5 +4,5 @@ using UnityEngine;
 
 public static class BackendConfig
 {
-public const string BaseUrl = "http://localhost:5216";
+    public const string BaseUrl = "http://localhost:5216";
 }

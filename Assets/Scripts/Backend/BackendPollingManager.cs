@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using Assets.Scripts.ServerIntegration;
 using UnityEngine;
 
 public class BackendPollingManager : MonoBehaviour
@@ -40,7 +41,6 @@ public class BackendPollingManager : MonoBehaviour
         {
             foreach (var channel in r_Channels)
             {
-                // אם אתה עדיין רוצה אפשרות לכבות ערוץ
                 if (!channel.IsEnabled)
                 {
                     continue;

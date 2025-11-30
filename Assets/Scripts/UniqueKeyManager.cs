@@ -49,6 +49,8 @@ namespace Assets.Scripts.ServerIntegration
                 return;
             }
 
+    Debug.Log("🌐 StartNewSessionAsync: sending request to backend...");
+
             StartSessionResponse response = await m_SessionApi.StartSessionAsync(ct);
             if (response == null || string.IsNullOrWhiteSpace(response.Key))
             {

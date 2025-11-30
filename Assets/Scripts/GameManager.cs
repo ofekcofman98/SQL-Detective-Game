@@ -326,6 +326,7 @@ public class GameManager : Singleton<GameManager>
 
         QueryResultDecorator.Enrich(jsonResponse, CurrentQuery.fromClause.table.Name, CurrentQuery.selectClause.Columns);
 
+        Debug.Log($"[HandleQueryResults]");
         resultsUI.ShowResults(
             jsonResponse,
             CurrentQuery.selectClause.Columns,

@@ -36,12 +36,13 @@ public class QueryRelayApi : IQueryRelayApi
 
     public Task<ApiMessageResponse> SendQuery(string key, Query query, CancellationToken ct = default)
     {
-        var settings = new JsonSerializerSettings();
-        settings.Converters.Add(new OperatorConverter());
+        // var settings = new JsonSerializerSettings();
+        // settings.Converters.Add(new OperatorConverter());
 
-        string queryJson = JsonConvert.SerializeObject(query, settings);
+        // string queryJson = JsonConvert.SerializeObject(query, settings);
         
         string path = $"{k_Route}?key={key}";
 
-        return r_BackendClient.PostJsonAsync<ApiMessageResponse, string>(path, queryJson, ct);    }
+        return r_BackendClient.PostJsonAsync<ApiMessageResponse, Query>(path, query, ct);    
+    }
 }

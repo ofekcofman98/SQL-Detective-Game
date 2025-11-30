@@ -34,11 +34,14 @@ public class UniqueKeyMenu : MenuBase
 
             Debug.Log("🧍‍♂️ Player confirmed 'continue on PC'");
             GameManager.Instance.ForceStartGameFromPC();
+            CloseAndProceed();
         });
     }
 
     private void OnEnable()
     {
+        Debug.Log($"🧷 UniqueKeyMenu.OnEnable, registerExistingKey={registerExistingKey}, current gameKey='{UniqueKeyManager.Instance.gameKey}'");
+
         waitingLabel.SetActive(true);
         keyLabel.text = "";
 
@@ -60,6 +63,8 @@ public class UniqueKeyMenu : MenuBase
 
     private IEnumerator WaitForKeyGeneration()
     {
+        Debug.Log("🔄 WaitForKeyGeneration: starting new session...");
+
         var task = UniqueKeyManager.Instance.StartNewSessionAsync();
 
         yield return new WaitUntil(() => task.IsCompleted);
@@ -67,37 +72,44 @@ public class UniqueKeyMenu : MenuBase
         if (task.Exception != null)
         {
             Debug.LogError($"❌ Failed to start new session: {task.Exception.InnerException?.Message ?? task.Exception.Message}");
+            waitingLabel.SetActive(false);
+            keyLabel.text = "Error getting key";
             yield break;
         }
 
         if (string.IsNullOrEmpty(UniqueKeyManager.Instance.gameKey))
         {
             Debug.LogError("❌ WaitForKeyGeneration: gameKey is still empty after StartNewSessionAsync");
+            waitingLabel.SetActive(false);
+            keyLabel.text = "No key received";
             yield break;
         }
 
-        keyLabel.text = $"{UniqueKeyManager.Instance.gameKey}";
+        waitingLabel.SetActive(false);
+        keyLabel.text = UniqueKeyManager.Instance.gameKey;
 
-        // ConnectListener.Instance.StartListening();
-        // Wait for mobile to connect (you need to call OnMobileConnected externally)
-        // yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
-        //                                  GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
+        Debug.Log($"✅ WaitForKeyGeneration: key ready and shown on screen: {UniqueKeyManager.Instance.gameKey}");
 
-        MenuManager.Instance.HideMenu(eMenuType.Key);
-        // GameManager.Instance.TurnOffSkipOnMobile();
+        // // ConnectListener.Instance.StartListening();
+        // // Wait for mobile to connect (you need to call OnMobileConnected externally)
+        // // yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
+        // //                                  GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
 
-        // if (GameManager.Instance.MobileConnected)
-        // {
-        //     UIManager.Instance.HideSQLButton();
-        //     // Debug.Log("GameManager.Instance.MobileConnected = true");
-        // }
-        // else if (GameManager.Instance.SkipMobileWaiting)
-        // {
-        //     UIManager.Instance.ShowSQLButton();
-        //     // Debug.Log("GameManager.Instance.SkipMobileWaiting = true");
-        // }
+        // MenuManager.Instance.HideMenu(eMenuType.Key);
+        // // GameManager.Instance.TurnOffSkipOnMobile();
 
-        m_OnKeyAccepted?.Invoke();
+        // // if (GameManager.Instance.MobileConnected)
+        // // {
+        // //     UIManager.Instance.HideSQLButton();
+        // //     // Debug.Log("GameManager.Instance.MobileConnected = true");
+        // // }
+        // // else if (GameManager.Instance.SkipMobileWaiting)
+        // // {
+        // //     UIManager.Instance.ShowSQLButton();
+        // //     // Debug.Log("GameManager.Instance.SkipMobileWaiting = true");
+        // // }
+
+        // m_OnKeyAccepted?.Invoke();
     }
 
     private IEnumerator WaitForKeyRegistration()
@@ -124,4 +136,18 @@ public class UniqueKeyMenu : MenuBase
         // // m_OnKeyAccepted?.Invoke();
         // GameManager.Instance.StartSavedGame();
     }
+
+    private void CloseAndProceed()
+    {
+        MenuManager.Instance.HideMenu(eMenuType.Key);
+        m_OnKeyAccepted?.Invoke();
+    }
+
+    public void OnMobileConnected()
+    {
+        Debug.Log("📱 Mobile connected, closing key menu");
+        CloseAndProceed();
+    }
+
+
 }
