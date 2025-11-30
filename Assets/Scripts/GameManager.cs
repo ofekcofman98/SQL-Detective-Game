@@ -31,7 +31,7 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] public SchemeDisplayer schemeDisplayer;
     [SerializeField] private QuerySender querySender;
     public QuerySender QuerySender => querySender;
-    [SerializeField] public QueryListener queryReceiver;
+    // [SerializeField] public QueryListener queryReceiver; //!
     [SerializeField] private QueryValidator queryValidator;
     [SerializeField] public MissionUIManager MissionUIManager;
     [SerializeField] public ResultsUI resultsUI;
@@ -72,7 +72,7 @@ public class GameManager : Singleton<GameManager>
                 OnQueryIsCorrect?.Invoke(isCorrect);
                 if (isCorrect)
                 {
-                    QuerySender.MarkQueryAsSent(); // ✅ only mark as sent if the query is correct
+                    QuerySender.MarkQueryAsSent();
                 }
             };
 
@@ -86,31 +86,25 @@ public class GameManager : Singleton<GameManager>
     {
         Application.targetFrameRate = 60;
 
-        if (!Application.isMobilePlatform)
-        {
-            // PC: Start polling the server for queries
-            if (queryReceiver != null)
-            {
-                Debug.Log("🖥 PC detected — starting QueryReceiver to listen for mobile queries.");
-                //queryReceiver.StartListening();
-            }
-            else
-            {
-                Debug.LogWarning("⚠️ QueryReceiver is null — cannot listen for queries.");
-            }
-        }
-        else
+        if (Application.isMobilePlatform)
         {
             screensaverController = new ScreensaverController(mobileCanvas, mobileScreensaverCanvas);
             screensaverController.ShowScreensaver();
             Debug.Log("📱 Mobile detected — not starting listener (mobile only sends queries).");
-            // StateListener.Instance.StartListening();
+        }
+        else
+        {
+            Debug.Log("🖥 PC detected — will receive queries from BackendPollingManager.");
         }
 
-        // if (!Application.isMobilePlatform && mobileScreensaverCanvas != null)
-        // {
-        //     mobileScreensaverCanvas.SetActive(false);
-        // }
+
+        var pollingManager = FindObjectOfType<BackendPollingManager>();
+        var queryChannel = pollingManager.GetChannel<QueryRelayPollingChannel>();
+        queryChannel.OnQueryReceived += query =>
+        {
+            SaveQuery(query);
+            ExecuteLocally(query);
+        };
     }
 
     public void ForceStartGameFromPC()
@@ -122,17 +116,6 @@ public class GameManager : Singleton<GameManager>
 
     public void TurnOffSkipOnMobile()
     {
-        // SkipMobileWaiting = false;
-        // UIManager.Instance.ShowSQLButton();
-        // if (SkipMobileWaiting)
-        // {
-        //     UIManager.Instance.ShowSQLButton(); // ✅ Player chose to play solo on PC
-        // }
-        // else
-        // {
-        //     UIManager.Instance.HideSQLButton(); // ✅ Mobile connected properly
-        // }
-
         SkipMobileWaiting = false; // reset only *after* the decision has been acted on
         UIManager.Instance.HideSQLButton();
     }
@@ -151,7 +134,7 @@ public class GameManager : Singleton<GameManager>
 
     public void StartSequence(eSequence sequence)
     {
-        UniqueKeyManager.Instance.GenerateGameKey();
+        // UniqueKeyManager.Instance.GenerateGameKey();
         SequenceManager.Instance.StartSequence(sequence);
     }
     
@@ -160,10 +143,14 @@ public class GameManager : Singleton<GameManager>
         MissionUIManager.ShowUI(); // This will handle popup or normal mission
     }
 
-    public void StartSavedGame(string key)
+    // public void StartSavedGame(string key)
+    // {
+    //     GameProgressSender gps = new GameProgressSender();
+    //     StartCoroutine(GameProgressSender.Instance.GetSavedGameFromServer(key));
+    // }
+    public void StartSavedGame()
     {
-        GameProgressSender gps = new GameProgressSender();
-        StartCoroutine(GameProgressSender.Instance.GetSavedGameFromServer(key));
+        GameSaver.Instance.ApplyLoadedGame();
     }
 
     public void StartGameWithKeyMenu(Action onKeyAccepted)
@@ -196,16 +183,22 @@ public class GameManager : Singleton<GameManager>
 
     public void InitMobile()
     {
-        if(Application.isMobilePlatform)
-        {
-            Debug.Log("🖥 Running on Mobile — inside the InitMobile method");
-            StateListener.Instance.StartListening();
-            Debug.Log("🖥 Running on Mobile — after StateListener listening and before ResetListener listening");
-            ResetListener.Instance.StartListening();
-            Debug.Log("🖥 Running on Mobile — after ResetListener listening and before ResetGame");
-            GameManager.Instance.ResetGame();
-        }
+        // if(Application.isMobilePlatform)
+        // {
+        //     Debug.Log("🖥 Running on Mobile — inside the InitMobile method");
+        //     // StateListener.Instance.StartListening();
+        //     Debug.Log("🖥 Running on Mobile — after StateListener listening and before ResetListener listening");
+        //     ResetListener.Instance.StartListening();
+        //     Debug.Log("🖥 Running on Mobile — after ResetListener listening and before ResetGame");
+        //     GameManager.Instance.ResetGame();
+        // }
         
+        if (!Application.isMobilePlatform)
+            return;
+
+        Debug.Log("📱 InitMobile called on mobile client");
+
+        StartCoroutine(ResetGame());
     }
 
     public void SetSqlMode()
@@ -292,22 +285,10 @@ public class GameManager : Singleton<GameManager>
 
         if (querySender != null)
         {
-
-            // if (QuerySender.IsQuerySent)
-            // {
-            //     Debug.LogWarning("🚨 Query already accepted. Blocking further sends.");
-            //     return;
-            // }
-
             Debug.Log("📤 Sending query to server: " + CurrentQuery.QueryString);
             querySender.SendQueryToServer(CurrentQuery);
         }
 
-        if (queryReceiver != null)
-        {
-            Debug.Log("🎧 Preparing to listen for the next query...");
-            queryReceiver.StartListening();  // this triggers polling
-        }
         SetSqlMode();
     }
 
@@ -345,6 +326,7 @@ public class GameManager : Singleton<GameManager>
 
         QueryResultDecorator.Enrich(jsonResponse, CurrentQuery.fromClause.table.Name, CurrentQuery.selectClause.Columns);
 
+        Debug.Log($"[HandleQueryResults]");
         resultsUI.ShowResults(
             jsonResponse,
             CurrentQuery.selectClause.Columns,
@@ -392,6 +374,7 @@ public class GameManager : Singleton<GameManager>
 
         if (LocationManager.Instance.OfficeSpawnPoint == null)
             Debug.Log($"LocationManager.Instance.OfficeSpawnPoint is null");  
+        
         LocationManager.Instance.TeleportTo(LocationManager.Instance.OfficeSpawnPoint);
         SuspectsManager.Instance?.ResetSuspects();
         resultsUI.ResetResults();
@@ -416,7 +399,8 @@ public class GameManager : Singleton<GameManager>
 
     private void OnApplicationQuit()
     {
-        StartCoroutine(ResetSender.Instance.ResetServerOnDestroy());
+        // StartCoroutine(ResetSender.Instance.ResetServerOnDestroy());
+        _ = GameSaver.Instance.SaveGame();
     }
     
 }

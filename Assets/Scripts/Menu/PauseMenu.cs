@@ -34,7 +34,9 @@ public class PauseMenu : MenuBase
 
     private void OnSyncClicked()
     {
-        StateSender.Instance.UpdatePhone();
+        //! StateSender.Instance.UpdatePhone();
+        Debug.Log("🔄 Manual sync: saving game progress to server");
+        _ = GameSaver.Instance.SaveGame();
     }
 
     private void OnQuitClicked()
