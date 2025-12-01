@@ -116,25 +116,14 @@ public class UniqueKeyMenu : MenuBase
     {
         yield return new WaitUntil(() => !string.IsNullOrEmpty(UniqueKeyManager.Instance.gameKey));
 
+        waitingLabel.SetActive(false);
+
         keyLabel.text = $"{UniqueKeyManager.Instance.gameKey}";
 
         MenuManager.Instance.HideMenu(eMenuType.Key);
 
         GameManager.Instance.StartSavedGame();
 
-        // yield return new WaitUntil(() => !string.IsNullOrEmpty(UniqueKeyManager.Instance.gameKey));
-
-        // keyLabel.text = $"{UniqueKeyManager.Instance.gameKey}";
-
-        // ConnectListener.Instance.StartListening();
-        // // Wait for mobile to connect (you need to call OnMobileConnected externally)
-        // yield return new WaitUntil(() => GameManager.Instance.MobileConnected ||
-        //                                  GameManager.Instance.SkipMobileWaiting); // or any other flag for mobile connection  
-
-        // MenuManager.Instance.HideMenu(eMenuType.Key);
-
-        // // m_OnKeyAccepted?.Invoke();
-        // GameManager.Instance.StartSavedGame();
     }
 
     private void CloseAndProceed()

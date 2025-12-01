@@ -77,6 +77,9 @@ public class GameSaver : Singleton<GameSaver>
             m_LastLoaded = dto;
             m_LastLoadedKey = key;
 
+            UniqueKeyManager.Instance.SetGameKeyFromSavedGame(key);
+
+
             onValidationComplete?.Invoke(true);
         }
         catch (Exception ex)
