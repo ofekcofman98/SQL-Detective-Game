@@ -1,39 +1,81 @@
 **SQL Detective**
 
-SQL Detective is a Unity-based cross-platform game (PC + Mobile) where players solve detective cases using SQL queries.
-The project was developed as our final Computer Science project by Ofek Cofman
- and Ariel Vaknin
-.
+SQL Detective is a cross-platform detective investigation game where players solve cases using SQL queries.
+The game is built in Unity (PC + Mobile) and communicates with a custom .NET backend and Supabase PostgreSQL database.
 
-🎮 Game Overview
+**🎮 Game Overview**
 
-* The PC is the main investigation hub.
+* PC: the main investigation platform (exploration, dialogue, story progression).
 
-* The mobile becomes the controller, connected via a unique key system.
+* Mobile: becomes an interactive SQL controller using a visual drag-and-drop Query Builder.
 
-* Players progress by solving cases with SQL queries that unlock new tables, witnesses, and evidence.
+* Players progress through missions, uncover clues, and unlock new database tables as they solve each step of the case.
 
-🔍 Game Highlights
 
-* Visual SQL Query Builder on mobile (drag & drop SELECT, FROM, WHERE, JOIN, and more)
+**🔍 Key Features:**
 
-* Rich 3D world to explore and investigate
+  ✔ Visual SQL Query Builder (mobile)
+  * Drag & drop SELECT, FROM, WHERE, AND, JOIN, value inputs, and table/column selections. 
+    * Multi-condition WHERE with AND logic
+    * Dynamic Clause rendering system
+    * Condition-indexed button logic
+    * Fully modular UI rendering with Populator classes
+  
+  ✔ Dynamic Story & Mission System
+  * Driven entirely by ScriptableObjects:
+    * SQL missions (query-based progression)
+    * Non-SQL missions (interact, explore, unlock)
+    * Popup tutorial missions
+    * Each mission unlocks new tables, clues, or sequences
+  
+  ✔ Supabase Cloud Database
+  
+  ✔ Custom Backend (C#, .NET)
+  * A dedicated backend handles:
+    * Game state saving/loading
+    * PC & Mobile communication
+    * Query relay & validation
+    * Unique session keys
+    * Server polling and event routing
+  
+  ✔ Cross-Device Sync
+  * PC and mobile communicate through:
+    * Backend session APIs
+    * Unique key pairing
+    * Realtime polling channels
+    * Full game progress synchronization
+  
+  ✔ 3D Interactive World
+  * Players explore scenes, interact with objects, access clues, and uncover the criminal step-by-step.
+ 
+**🛠️ Tech Stack**
+* Unity (C#):
+  * PC + Mobile implementations
+  * Drag-and-drop UI framework
+  * Modular QueryBuilder architecture
+  * DataGridDisplayer (Excel-like dynamic grid)
+  * Mission system
+  * Schema Displayer with FK arrows
+  * Event-driven managers
 
-* Supabase cloud database with dynamic missions and data
+* Backend (.NET 8 Web API):
+  * REST APIs for:
+  * Game progress
+  * Query relay
+  * Session pairing
+  * Clean modular service structure
+  * Deployed via Docker
 
-* Cross-device sync (PC ↔ Mobile) in real time
+* Database (Supabase PostgreSQL):
+  * RPC functions
+  * Dynamic schema queries
+  * Cloud-hosted tables for gameplay
+  * Uses Supabase Auth + Row Level Security (RLS disabled in dev)
 
-* Story-driven gameplay: uncover the criminal step by step
 
-🛠️ Tech Stack
+**🚀 Play the Game**
+🎥 Gameplay Demo: https://youtu.be/9zejBFtsaI8
 
-* Unity (C#) – cross-platform gameplay & UI
+🕹️ Play on Itch.io (PC + Mobile) : https://sql-detective.itch.io/sql-detective
 
-* Supabase (PostgreSQL) – cloud database and APIs
-
-* Python (Flask + Google Cloud Run) – PC ↔ Mobile server communication
-
-🚀 Play the Game:
-
-🔗 Play on Itch.io: https://sql-detective.itch.io/sql-detective
- (PC required; mobile works only when paired with PC)
+Mobile play requires pairing with a PC via unique session key.
