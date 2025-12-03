@@ -98,7 +98,8 @@ public class MissionUIManager : MonoBehaviour
         if (MissionsManager.Instance.CurrentMission.unlocksTable)
         {
             string tableName = MissionsManager.Instance.CurrentMission.tableToUnlock;
-            Table table = SupabaseManager.Instance.Tables.FirstOrDefault(t => t.Name == tableName);
+            // Table table = SupabaseManager.Instance.Tables.FirstOrDefault(t => t.Name == tableName);
+            Table table = SchemaManager.Instance.Tables.FirstOrDefault(t => t.Name == tableName);
             if (table != null)
             {
                 table.UnlockTable(); // ✅ Do it here so Init sees the unlocked state
@@ -115,7 +116,8 @@ public class MissionUIManager : MonoBehaviour
 
     private void showNewTable(string tableName)
     {
-        Table table = SupabaseManager.Instance.Tables.FirstOrDefault(t => t.Name == tableName);
+        // Table table = SupabaseManager.Instance.Tables.FirstOrDefault(t => t.Name == tableName);
+        Table table = SchemaManager.Instance.Tables.FirstOrDefault(t => t.Name == tableName);
         if (table != null)
         {
             newTablePopup.Open(table);

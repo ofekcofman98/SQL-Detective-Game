@@ -52,11 +52,41 @@ public class QueryBuilder : MonoBehaviour
 
         updateAvailableClauses();
 
-        if (SupabaseManager.Instance.Tables.Count <= 0)
+        // if (SupabaseManager.Instance.Tables.Count <= 0)
+        // {
+        //     SupabaseManager.Instance.OnTableNamesFetched -= PopulateTableSelection;
+        //     SupabaseManager.Instance.OnTableNamesFetched += PopulateTableSelection;
+        // }
+    }
+
+    private bool checkIsReady()
+    {
+        if (!IsReady)
         {
-            SupabaseManager.Instance.OnTableNamesFetched -= PopulateTableSelection;
-            SupabaseManager.Instance.OnTableNamesFetched += PopulateTableSelection;
+            Debug.LogWarning("QueryBuilder.BuildQuery() called before initialization is complete.");
+            return false;
         }
+
+        var schema = SchemaManager.Instance;
+        if (schema == null)
+        {
+            Debug.LogWarning("SchemaManager is not available.");
+            return false;
+        }
+
+        if (!schema.IsLoaded)
+        {
+            Debug.LogWarning("Schema is not loaded yet.");
+            return false;
+        }
+
+        if (schema.Tables == null || schema.Tables.Count == 0)
+        {
+            Debug.LogWarning("Schema tables are empty, cannot build query.");
+            return false;
+        }
+
+        return true;
     }
 
     private void HandleQueryChanged()
@@ -73,46 +103,60 @@ public class QueryBuilder : MonoBehaviour
     }
 
 
-    private bool checkIsReady()
-    {
-        bool res = true;
-        if (!IsReady)
-        {
-            Debug.LogWarning("⚠️ QueryBuilder.BuildQuery() called before initialization is complete.");
-            res = false;
-        }
+    // private bool checkIsReady()
+    // {
+    //     bool res = true;
+    //     if (!IsReady)
+    //     {
+    //         Debug.LogWarning("⚠️ QueryBuilder.BuildQuery() called before initialization is complete.");
+    //         res = false;
+    //     }
 
-        if (SupabaseManager.Instance == null || SupabaseManager.Instance.Tables == null)
-        {
-            Debug.LogWarning("⚠️ SupabaseManager or Tables not ready yet.");
-            res = false;
-        }
+    //     if (SupabaseManager.Instance == null || SupabaseManager.Instance.Tables == null)
+    //     {
+    //         Debug.LogWarning("⚠️ SupabaseManager or Tables not ready yet.");
+    //         res = false;
+    //     }
 
-        if (SupabaseManager.Instance.Tables.Count == 0)
-        {
-            Debug.LogWarning("⚠️ Supabase tables are empty — cannot build query.");
-            res = false;
-        }
+    //     if (SupabaseManager.Instance.Tables.Count == 0)
+    //     {
+    //         Debug.LogWarning("⚠️ Supabase tables are empty — cannot build query.");
+    //         res = false;
+    //     }
 
-        return res;
-    }
+    //     return res;
+    // }
 
     private void OnEnable()
     {
-        var supabase = SupabaseManager.Instance;
-        if (supabase != null)
+        // var supabase = SupabaseManager.Instance;
+        // if (supabase != null)
+        // {
+        //     supabase.OnSchemeFullyLoaded += HandleSchemeReady;
+        // }
+
+        var schema = SchemaManager.Instance;
+        if (schema != null)
         {
-            supabase.OnSchemeFullyLoaded += HandleSchemeReady;
+            schema.OnSchemaFullyLoaded += HandleSchemeReady;
         }
+
     }
 
     private void OnDisable()
     {
-        var supabase = FindObjectOfType<SupabaseManager>();
-        if (supabase != null)
+        // var supabase = FindObjectOfType<SupabaseManager>();
+        // if (supabase != null)
+        // {
+        //     supabase.OnSchemeFullyLoaded -= HandleSchemeReady;
+        // }
+
+        var schema = FindObjectOfType<SchemaManager>();
+        if (schema != null)
         {
-            supabase.OnSchemeFullyLoaded -= HandleSchemeReady;
+            schema.OnSchemaFullyLoaded -= HandleSchemeReady;
         }
+
     }
 
     private void HandleSchemeReady()
@@ -171,7 +215,8 @@ public class QueryBuilder : MonoBehaviour
 
     public void PopulateTableSelection()
     {
-        var unlockedTables = SupabaseManager.Instance.Tables.Where(t => t.IsUnlocked);
+        // var unlockedTables = SupabaseManager.Instance.Tables.Where(t => t.IsUnlocked);
+        var unlockedTables = SchemaManager.Instance.Tables.Where(t => t.IsUnlocked);
 
         if (query.fromClause.table == null)
         {

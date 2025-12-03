@@ -108,7 +108,8 @@ public class MissionsManager : Singleton<MissionsManager>
             {
                 if (mission.unlocksTable && !string.IsNullOrEmpty(mission.tableToUnlock))
                 {
-                    Table unlockedTable = SupabaseManager.Instance.Tables.FirstOrDefault(
+                    // Table unlockedTable = SupabaseManager.Instance.Tables.FirstOrDefault(
+                    Table unlockedTable = SchemaManager.Instance.Tables.FirstOrDefault(
                     t => t.Name == mission.tableToUnlock);
 
                     if (unlockedTable != null)
@@ -237,7 +238,8 @@ public class MissionsManager : Singleton<MissionsManager>
         {
             if (CurrentMission.unlocksTable && !string.IsNullOrEmpty(CurrentMission.tableToUnlock))
             {
-                Table unlockedTable = SupabaseManager.Instance.Tables.FirstOrDefault(
+                // Table unlockedTable = SupabaseManager.Instance.Tables.FirstOrDefault(
+                Table unlockedTable = SchemaManager.Instance.Tables.FirstOrDefault(
                 t => t.Name == CurrentMission.tableToUnlock);
 
                 if (unlockedTable != null)
@@ -348,7 +350,8 @@ public class MissionsManager : Singleton<MissionsManager>
     {
         currentMissionIndex = 0;
         LivesManager.Instance.ResetLives();
-        foreach (Table table in SupabaseManager.Instance.Tables)
+        // foreach (Table table in SupabaseManager.Instance.Tables)
+        foreach (Table table in SchemaManager.Instance.Tables)
         {
             table.LockTable();
         }

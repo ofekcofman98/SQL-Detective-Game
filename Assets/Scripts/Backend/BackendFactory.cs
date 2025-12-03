@@ -17,4 +17,7 @@ public static class BackendFactory
 
     public static ISessionApi CreateSessionApi()
         => new SessionApi(Client);
+
+    public static ISchemaApi CreateSchemaApi()
+        => new SchemaApi(Client);
 }

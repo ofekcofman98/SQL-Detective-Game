@@ -48,7 +48,8 @@ public class LocationsMenu : Popup//MonoBehaviour
             LocationCard card = cardObj.GetComponent<LocationCard>();
             card.Init(location);
 
-            bool isPersonsUnlocked = SupabaseManager.Instance.IsTableUnlocked("Persons");
+            // bool isPersonsUnlocked = SupabaseManager.Instance.IsTableUnlocked("Persons");
+            bool isPersonsUnlocked = SchemaManager.Instance.IsTableUnlocked("Persons");
             bool isLocked = (location is PrivateHomeLocation) && !isPersonsUnlocked;
             card.SetLocked(isLocked);
 

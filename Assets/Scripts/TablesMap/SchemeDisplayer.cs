@@ -62,7 +62,8 @@ public class SchemeDisplayer : MonoBehaviour
 
     public void DisplaySchema()
     {
-        layoutManager.LayoutTables(SupabaseManager.Instance.Tables);
+        // layoutManager.LayoutTables(SupabaseManager.Instance.Tables);
+        layoutManager.LayoutTables(SchemaManager.Instance.Tables);
         SchemaText.text = "Schema";
         StartCoroutine(WaitThenDrawArrows()); 
 
@@ -85,7 +86,8 @@ public class SchemeDisplayer : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        foreach (Table table in SupabaseManager.Instance.Tables)
+        // foreach (Table table in SupabaseManager.Instance.Tables)
+        foreach (Table table in SchemaManager.Instance.Tables)
         {
             foreach (ForeignKey fk in table.ForeignKeys)
             {
